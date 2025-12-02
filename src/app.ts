@@ -1,5 +1,5 @@
+// src/app.ts
 import express from "express";
-import cors from "cors";
 import {
   createAction,
   listActions,
@@ -8,24 +8,14 @@ import {
 
 const app = express();
 
-// CORS config that works for Vercel prod + previews
-const corsHandler = cors({
-  origin: true, // reflect request origin automatically
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-});
-
-app.use(corsHandler);
-//app.options("*", corsHandler);
-
 app.use(express.json());
 
-// Simple health check
+// Health check
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-// Optional helper to reset in-memory store (useful for testing)
+// Optional: reset in-memory store
 app.post("/debug/reset", (req, res) => {
   resetStore();
   res.status(204).end();
