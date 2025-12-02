@@ -3,7 +3,16 @@ import cors from "cors";
 import { createAction, listActions } from "./services/actionsService";
 
 const app = express();
-app.use(cors());   
+
+app.use(
+    cors({
+      origin: true, // reflect the request Origin (allows all origins in practice)
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+    })
+  );
+
+app.options("*", cors());
 app.use(express.json());
 
 app.get("/health", (_req, res) => {
