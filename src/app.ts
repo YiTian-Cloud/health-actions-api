@@ -1,40 +1,54 @@
 import express from "express";
 import cors from "cors";
-import { createAction, listActions } from "./services/actionsService";
+import {
+  createAction,
+  listActions,
+  resetStore,
+} from "./services/actionsService";
 
 const app = express();
 
-app.use(
-    cors({
-      origin: true, // reflect the request Origin (allows all origins in practice)
-      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization"],
-    })
-  );
-
-app.options("*", cors());
-app.use(express.json());
-
-app.get("/health", (_req, res) => {
-  res.status(200).send({ status: "ok" });
+// CORS config that works for Vercel prod + previews
+const corsHandler = cors({
+  origin: true, // reflect request origin automatically
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 });
 
-app.post("/members/:id/actions", (req, res) => {
-  const memberId = req.params.id;
+app.use(corsHandler);
+//app.options("*", corsHandler);
+
+app.use(express.json());
+
+// Simple health check
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
+// Optional helper to reset in-memory store (useful for testing)
+app.post("/debug/reset", (req, res) => {
+  resetStore();
+  res.status(204).end();
+});
+
+// List actions for a member
+app.get("/members/:memberId/actions", (req, res) => {
+  const { memberId } = req.params;
+  const actions = listActions(memberId);
+  res.json(actions);
+});
+
+// Create an action for a member
+app.post("/members/:memberId/actions", (req, res) => {
+  const { memberId } = req.params;
   const { type } = req.body;
 
-  if (!type) {
-    return res.status(400).send({ error: "type is required" });
+  if (!type || typeof type !== "string") {
+    return res.status(400).json({ error: "Missing or invalid 'type' field" });
   }
 
   const action = createAction(memberId, type);
-  res.status(201).send(action);
-});
-
-app.get("/members/:id/actions", (req, res) => {
-  const memberId = req.params.id;
-  const actions = listActions(memberId);
-  res.status(200).send(actions);
+  res.status(201).json(action);
 });
 
 export default app;
